@@ -1,13 +1,23 @@
 package layout;
 
+import java.awt.BorderLayout;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 
+import database.Database;
+import database.Expense;
 import database.User;
 import socket.Client;
 
@@ -23,6 +33,7 @@ public class Dashboard extends JFrame {
 		client = new Client();
 		
 		this.setSize(600, 500);
+		this.setLocationRelativeTo(null);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		setLoginMenu();
@@ -56,6 +67,41 @@ public class Dashboard extends JFrame {
 		
 		this.setJMenuBar(menuBar);
 		SwingUtilities.updateComponentTreeUI(this);
+		this.add(createUserDashboard(), BorderLayout.CENTER);
+	}
+	
+	public JPanel createUserDashboard() {
+		JPanel panel = new JPanel();
+		ArrayList<Expense> expenses = Database.getExpenses(user);
+		JTextArea ta = new JTextArea();
+		JTable table = new JTable();
+		ta.setText(expenses.toString());
+		ExpenseTableModel tableModel = processExpenses();
+		table.setModel(tableModel);
+		JScrollPane sp = new JScrollPane(table);
+		panel.add(sp);
+//		panel.setLayout();
+		return panel;
+	}
+	
+	public ExpenseTableModel processExpenses() {
+		ArrayList<Expense> expenses = Database.getExpenses(user);
+		String[] cols = {"Title", "Amount", "Time", "Creditor", "Debtor(s)", "Group"};
+		ExpenseTableModel tableModel = new ExpenseTableModel();
+		
+		tableModel.setColumnIdentifiers(cols);
+		Object[] row = new Object[6];
+		for (Expense e : expenses) {
+			tableModel.addRow(new Object[] {
+					e.getTitle(), e.getAmount(), e.getTime(), e.getCreditorStr(), e.getDebtorStr(), e.getGroupId()
+			});
+		}
+		return tableModel;
+	}
+	
+	class ExpenseTableModel extends DefaultTableModel {
+		private String[] cols = {"Title", "Amount", "Time", "Creditor", "Debtor(s)", "Group"};
+
 	}
 	
 	public User getUser(String username) throws Exception {

@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 import utils.Encryption;
 
@@ -42,10 +43,10 @@ public class Database {
 			
 			Statement statement = con.createStatement();
 			
+//			statement.executeUpdate("DROP TABLE IF EXISTS Expense");
 //			statement.executeUpdate("DROP TABLE IF EXISTS User");
 			statement.executeUpdate("CREATE TABLE IF NOT EXISTS User (id string NOT NULL, username string PRIMARY KEY, password string NOT NULL, key string NOT NULL, friends string)");
-//			statement.executeUpdate("DROP TABLE IF EXISTS Expense");
-			statement.executeUpdate("CREATE TABLE IF NOT EXISTS Expense (id string PRIMARY KEY, title string, amount double NOT NULL, time text, creditor string NOT NULL, debtor string NOT NULL, groupId string)");
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS Expense (id string PRIMARY KEY, title string, amount double NOT NULL, time text, creditor string NOT NULL, debtor string NOT NULL, groupId string, FOREIGN KEY(creditor) references User(username))");
 
 		} catch (Exception e) {
 			System.err.println("error setting up database");
@@ -141,19 +142,89 @@ public class Database {
 		}
 	}
 	
+	public static void addExpense(Expense expense) throws Exception {
+		PreparedStatement statement;
+		try {
+			con = connect();
+			
+			String insertString = "INSERT INTO Expense VALUES (?, ?, ?, ?, ?, ?, ?)";
+			statement = con.prepareStatement(insertString);
+			statement.setString(1, expense.getId());
+			statement.setString(2, expense.getTitle());
+			statement.setDouble(3, expense.getAmount());
+			statement.setString(4, expense.getTime());
+			statement.setString(5, expense.getCreditorStr());
+			statement.setString(6, expense.getDebtorStr());
+			statement.setString(7, expense.getGroupId());
+			
+			statement.execute();
+		} catch (Exception e) {
+			System.err.println("error adding expense to database");
+			throw e;
+		} finally {
+			disconnect();
+		}
+	}
+	
+	public static ArrayList<Expense> getExpenses(User user) {
+		PreparedStatement statement;
+		ArrayList<Expense> expenses = new ArrayList<Expense>();
+		try {
+			con = connect();
+			String queryString = "SELECT * FROM Expense WHERE creditor = ?";
+//			String queryString = "SELECT * FROM Expense";
+			statement = con.prepareStatement(queryString);
+			statement.setString(1, user.getUsername());
+			ResultSet rs = statement.executeQuery();
+			
+			while (rs.next()) {
+				System.out.println(rs.getString("id"));
+				expenses.add(new Expense(
+						rs.getString("id"),
+						rs.getString("title"),
+						rs.getDouble("amount"),
+						rs.getString("time"),
+						rs.getString("creditor"),
+						rs.getString("debtor"),
+						rs.getString("groupId")
+						));
+			}
+			return expenses;
+		} catch (Exception e) {
+			System.err.println("error getting expenses for user " + user.getUsername());
+			e.printStackTrace();
+			return expenses;
+		} finally {
+			disconnect();
+		}
+	}
+	
+//	public static void setUpData() {
+//
+//	}
+	
 	public static void main(String[] args) {
 		Database.setUpDatabase();
 		
 		try {
 			User user = new User("hello", "helloworld");
-			Database.addUser(user);
+			User user1 = new User("goodbye", "goodbyeworld");
+			Expense expense = new Expense("Dinner", 21.5, "2023/12/12", user.getUsername(), user1.getUsername());
+			
+//			Database.addUser(user);
+//			Database.addUser(user1);
+//			Database.addExpense(expense);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
+//		System.out.println(expense);
 		System.out.println(Database.getUser("hello").toString());
+		System.out.println(Database.getExpenses(Database.getUser("hello")).toString());
 		
 		System.out.println(Database.verifyLogin("hello", "helloworld"));
+		System.out.println(Database.verifyLogin("goodbye", "goodbyeworld"));
 		System.out.println(Database.verifyLogin("ok", "ok"));
 		System.out.println(Database.verifyLogin("kkk", "kkk"));
 	}

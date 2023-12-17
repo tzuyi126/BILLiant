@@ -25,6 +25,7 @@ class Login extends JDialog {
 		
 		this.setTitle("Log In");
 		this.setSize(300, 200);
+		this.setLocationRelativeTo(null);
 		this.add(createLoginPanel());
 	}
 	
