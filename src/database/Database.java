@@ -47,6 +47,7 @@ public class Database {
 //			statement.executeUpdate("DROP TABLE IF EXISTS User");
 			statement.executeUpdate("CREATE TABLE IF NOT EXISTS User (id string NOT NULL, username string PRIMARY KEY, password string NOT NULL, key string NOT NULL, friends string)");
 			statement.executeUpdate("CREATE TABLE IF NOT EXISTS Expense (id string PRIMARY KEY, title string, amount double NOT NULL, time text, creditor string NOT NULL, debtor string NOT NULL, groupId string, FOREIGN KEY(creditor) references User(username))");
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS Expense (id string PRIMARY KEY, title string, amount double NOT NULL, time text, creditor string NOT NULL, debtor string NOT NULL, groupId string, FOREIGN KEY(creditor) references User(username))");
 
 		} catch (Exception e) {
 			System.err.println("error setting up database");
