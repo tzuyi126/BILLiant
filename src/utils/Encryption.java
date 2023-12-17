@@ -1,11 +1,18 @@
 package utils;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
-import java.security.MessageDigest;
+import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
 
@@ -25,6 +32,10 @@ public class Encryption {
 	private static final String LOWER_LETTER = "abcdefghijklmnopqrstuvwxyz";
 	
 	private static final String NUMBER = "0123456789";
+	
+	private static final String RSA = "RSA";
+	
+	private static final String AES = "AES";
 	
 	public static String getRandomeId() {
 		return Encryption.getRandomeId(7);
@@ -46,11 +57,11 @@ public class Encryption {
 	}
 	
 	public static Key getRandomKey() throws NoSuchAlgorithmException {
-		return KeyGenerator.getInstance("AES").generateKey();
+		return KeyGenerator.getInstance(AES).generateKey();
 	}
 	
 	public static String getRandomKeyStr() throws NoSuchAlgorithmException {
-		Key key = KeyGenerator.getInstance("AES").generateKey();
+		Key key = KeyGenerator.getInstance(AES).generateKey();
 		return Base64.getEncoder().encodeToString(key.getEncoded());
 	}
 	
@@ -60,7 +71,7 @@ public class Encryption {
 	
 	public static Key stringToKey(String keyStr) {
 		byte[] keyByte = Base64.getDecoder().decode(keyStr);
-		return new SecretKeySpec(keyByte, 0, keyByte.length, "AES");
+		return new SecretKeySpec(keyByte, 0, keyByte.length, AES);
 	}
 	
 	public static String encrypt(Key key, String input) 
@@ -68,7 +79,7 @@ public class Encryption {
 		    InvalidAlgorithmParameterException, InvalidKeyException,
 	    BadPaddingException, IllegalBlockSizeException {
 	    
-	    Cipher cipher = Cipher.getInstance("AES");
+	    Cipher cipher = Cipher.getInstance(AES);
 	    cipher.init(Cipher.ENCRYPT_MODE, key);
 	    byte[] cipherText = cipher.doFinal(input.getBytes());
 	    return Base64.getEncoder()
@@ -80,11 +91,66 @@ public class Encryption {
 		    InvalidAlgorithmParameterException, InvalidKeyException,
 	    BadPaddingException, IllegalBlockSizeException {
 	    
-	    Cipher cipher = Cipher.getInstance("AES");
+	    Cipher cipher = Cipher.getInstance(AES);
 	    cipher.init(Cipher.DECRYPT_MODE, key);
 	    byte[] plainText = cipher.doFinal(Base64.getDecoder()
 	        .decode(cipherText));
 	    return new String(plainText);
+	}
+	
+	public static byte[] pkEncrypt(Key key, byte[] plaintext) 
+			throws NoSuchAlgorithmException, NoSuchPaddingException, 
+			InvalidKeyException, IllegalBlockSizeException, 
+			BadPaddingException
+	{
+	    Cipher cipher = Cipher.getInstance(RSA);// /ECB/OAEPWithSHA1AndMGF1Padding");   
+	    cipher.init(Cipher.ENCRYPT_MODE, key);  
+	    return cipher.doFinal(plaintext);
+	}
+
+	public static byte[] pkDecrypt(Key key, byte[] ciphertext) 
+			throws NoSuchAlgorithmException, NoSuchPaddingException, 
+			InvalidKeyException, IllegalBlockSizeException, 
+			BadPaddingException
+	{
+	    Cipher cipher = Cipher.getInstance(RSA); // /ECB/OAEPWithSHA1AndMGF1Padding");   
+	    cipher.init(Cipher.DECRYPT_MODE, key);  
+	    return cipher.doFinal(ciphertext);
+	}
+
+	public static Key generateAESKey(byte[] sequence) {
+
+	    System.out.println("generated key with bytes "+ Arrays.toString(sequence));
+	    return new SecretKeySpec(sequence, "AES");
+	}
+	
+	public static byte[] generateSeed() {
+		SecureRandom secureRandom = new SecureRandom();
+		byte[] secureRandomKeyBytes = new byte[16];
+	    secureRandom.nextBytes(secureRandomKeyBytes);
+	    return secureRandomKeyBytes;
+	}
+	
+
+	public static PrivateKey readPrivateKey(String filename)
+		    throws Exception {
+
+	    byte[] keyBytes = Files.readAllBytes(Paths.get(filename));
+
+	      PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+	      KeyFactory kf = KeyFactory.getInstance(RSA);
+	      return kf.generatePrivate(spec);
+	}
+	
+	public static PublicKey readPublicKey(String keyString)
+		    throws Exception {
+
+	    byte[] keyBytes = Base64.getDecoder().decode(keyString);
+
+	    X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+	      KeyFactory kf = KeyFactory.getInstance(RSA);
+	      return kf.generatePublic(spec);
+	      
 	}
 	
 	public static void main(String[] args) {

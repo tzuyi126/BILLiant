@@ -1,5 +1,7 @@
 package layout;
 
+import java.io.IOException;
+
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -65,6 +67,17 @@ public class Dashboard extends JFrame {
 			return new User(response);
 		} catch (Exception e) {
 			System.err.println("error finding user with username: " + username);
+			throw e;
+		}
+	}
+	
+	public boolean verifyUser(String username, String password) throws Exception {
+		try {
+			String response = client.executeAndGetResponse("verify " + username + " " + password);
+			
+			return Boolean.parseBoolean(response);
+		} catch (Exception e) {
+			System.err.println("error verifying user with username: " + username);
 			throw e;
 		}
 	}

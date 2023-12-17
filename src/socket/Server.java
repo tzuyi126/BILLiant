@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.Key;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -12,6 +13,7 @@ import javax.swing.JTextArea;
 
 import database.Database;
 import database.User;
+import utils.Encryption;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,8 +29,18 @@ public class Server extends JFrame implements Runnable {
 	
 	private List<ClientHandler> clients = new ArrayList<>();
 	
+	private Key privateKey;
+	
 	public Server() {
 		super("Server");
+		
+		try {
+			privateKey = Encryption.readPrivateKey("keypairs/pkcs8_key");
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("problem loading private key: " + e.getMessage());
+			System.exit(1);
+		}
 		
 		this.setSize(500, 300);
 		
@@ -72,6 +84,8 @@ public class Server extends JFrame implements Runnable {
 		
 		private DataOutputStream toClient;
 		
+		private Key communicationKey;
+		
 		public ClientHandler(Socket socket) throws Exception {
 			this.socket = socket;
 			
@@ -85,6 +99,7 @@ public class Server extends JFrame implements Runnable {
 			}
 			
 			handshake();
+			handleAesSeed();
 			
 			new Thread(this).start();
 		}
@@ -118,6 +133,23 @@ public class Server extends JFrame implements Runnable {
 				throw new Exception("client violates handshake protocol: " + e.getMessage() + ". Abort.");
 			}
 		}
+		
+		private void handleAesSeed() throws Exception {
+			try {
+				int len = fromClient.readInt();
+				byte[] encryptedBytes = new byte[len];
+				fromClient.readFully(encryptedBytes, 0, len);
+				
+				byte[] decryptedBytes = Encryption.pkDecrypt(privateKey, encryptedBytes);
+				
+				communicationKey = Encryption.generateAESKey(decryptedBytes);
+				System.out.println("key is: " + communicationKey);
+			} catch (Exception e) {
+				System.err.println("error handling AES seed");
+				e.printStackTrace();
+				throw e;
+			}
+		}
 
 		@Override
 		public void run() {
@@ -127,9 +159,14 @@ public class Server extends JFrame implements Runnable {
 				while (true) {
 					String inString = fromClient.readUTF();
 					
-					ta.append("client: " + inString + '\n');
+					String decrypted = Encryption.decrypt(communicationKey, inString);
 					
-					execute(inString);
+					String response = execute(decrypted);
+
+					String encrypted = Encryption.encrypt(communicationKey, response);
+					
+					toClient.writeUTF(encrypted);
+					toClient.flush();
 				}
 			} catch (Exception e) {
 				ta.append("client might be closed\n");
@@ -137,39 +174,38 @@ public class Server extends JFrame implements Runnable {
 			}
 		}
 		
-		private void execute(String command) {
+		private String execute(String command) {
 			try {
 				if (command.startsWith("getuser ")) {
-					String requestUsername = command.split("getuser ", 2)[1];
+					String requestUsername = command.split(" ", 2)[1];
 					User user = Database.getUser(requestUsername);
 					
 					if (user == null) {
-						toClient.writeUTF("no user");
-						ta.append("response: no user\n");
+						return "no user";
 					} else {
-						toClient.writeUTF(user.toString());
-						ta.append("response: " + user.toString() + '\n');
+						return user.toString();
 					}
+				} else if (command.startsWith("verify ")) {
+					String requestUsername = command.split(" ", 3)[1];
+					String requestPassword = command.split(" ", 3)[2];
 					
-					toClient.flush();
+					return String.valueOf(Database.verifyLogin(requestUsername, requestPassword));
 				} else if (command.startsWith("adduser ")) {
-					String requestUser = command.split("adduser ", 2)[1];
+					String requestUser = command.split(" ", 2)[1];
 					User user = new User(requestUser);
 					
 					Database.addUser(user);
 					
-					toClient.writeUTF("done");
-					toClient.flush();
+					return "done";
+				} else {
+					ta.append("client: " + command + '\n');
+					return "";
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-
-				try {
-					toClient.writeUTF("failed to execute command: " + command);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
 				ta.append("failed to execute command: " + command + '\n');
+				
+				return "failed to execute command: " + command;
 			}
 		}
 	}

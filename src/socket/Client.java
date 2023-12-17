@@ -4,6 +4,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.Key;
+import java.security.PublicKey;
+
+import utils.Encryption;
 
 public class Client implements Runnable {
 	
@@ -12,6 +16,12 @@ public class Client implements Runnable {
 	private DataInputStream fromServer = null;
 	
 	private DataOutputStream toServer = null;
+	
+	private static final String SERVER_PUBLIC_KEY = "MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgGk9wUQ4G9PChyL5SUkCyuHjTNOglEy5h4KEi0xpgjxi/UbIH27NXLXOr94JP1N5pa1BbaVSxlvpuCDF0jF9jlZw5IbBg1OW2R1zUACK+NrUIAYHWtagG7KB/YcyNXHOZ6Icv2lXXd7MbIao3ShrUVXo3u+5BJFCEibd8a/JD/KpAgMBAAE=";
+	
+	private PublicKey serverPublicKey;
+	
+	private Key communicationKey;
 	
 	private static final String host = "localhost";
 	
@@ -32,6 +42,7 @@ public class Client implements Runnable {
 		
 		try {
 			handshake();
+			generateAesSeed();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -62,17 +73,36 @@ public class Client implements Runnable {
 		}
 	}
 	
-	public String executeAndGetResponse(String command) throws IOException {
+	private void generateAesSeed() throws Exception {
 		try {
-			toServer.writeUTF(command);
+			byte[] byteSequence = Encryption.generateSeed();
+			serverPublicKey = Encryption.readPublicKey(SERVER_PUBLIC_KEY);
+			
+			byte[] encryptedBytes = Encryption.pkEncrypt(serverPublicKey, byteSequence);
+
+			toServer.writeInt(encryptedBytes.length);
+			toServer.write(encryptedBytes);
+			toServer.flush();
+
+			communicationKey = Encryption.generateAESKey(byteSequence);
+			System.out.println("key is: " + communicationKey.toString());	
+		} catch (Exception e) {
+			System.err.println("error generating AES key: " + e.getMessage());
+			throw e;
+		}
+	}
+	
+	public String executeAndGetResponse(String command) throws Exception {
+		try {
+			String encryptedCommand = Encryption.encrypt(communicationKey, command);
+			
+			toServer.writeUTF(encryptedCommand);
 			toServer.flush();
 			
 			String response = fromServer.readUTF();
 			
-			System.out.println("execute command: " + command + ", response: " + response);
-			
-			return response;
-		} catch (IOException e) {
+			return Encryption.decrypt(communicationKey, response);
+		} catch (Exception e) {
 			System.err.println("error communicating with server");
 			e.printStackTrace();
 			throw e;

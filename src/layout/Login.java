@@ -111,11 +111,7 @@ class Login extends JDialog {
 	
 	private boolean verifyUser(String username, String password) throws Exception {
 		try {
-			User user = dashboard.getUser(username);
-			
-			if (user == null) return false;
-			
-			return user.getDecryptedPassword().equals(password);
+			return dashboard.verifyUser(username, password);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw e;

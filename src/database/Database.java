@@ -58,7 +58,7 @@ public class Database {
 	public static boolean verifyLogin(String username, String expectedPwd) {
 		PreparedStatement statement;
 		
-		boolean login = false;
+		boolean verified = false;
 		
 		try {
 			con = connect();
@@ -74,7 +74,7 @@ public class Database {
 				String actualPwd = Encryption.decrypt(Encryption.stringToKey(keyStr), encryptedPwd);
 				
 				if (actualPwd.equals(expectedPwd)) {
-					login = true;
+					verified = true;
 					break;
 				}
 			}
@@ -85,7 +85,7 @@ public class Database {
 		} finally {
 			disconnect();
 		}
-		return login;
+		return verified;
 	}
 	
 	public static void addUser(User user) throws Exception {
