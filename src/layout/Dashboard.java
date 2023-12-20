@@ -107,7 +107,7 @@ public class Dashboard extends JFrame {
 		Object[] row = new Object[6];
 		for (Expense e : expenses) {
 			tableModel.addRow(new Object[] {
-					e.getTitle(), e.getAmount(), e.getTime(), e.getCreditorStr(), e.getDebtorStr()
+					e.getTitle(), e.getAmount(), e.getTime(), e.getCreditorStr(), e.getDebtor()
 			});
 		}
 		return tableModel;
@@ -166,7 +166,14 @@ public class Dashboard extends JFrame {
 		}
 	}
 	
-	public ArrayList<Expense> getExpense(User user) {
+	public ArrayList<Expense> getExpenses(User user) throws Exception {
+		try {
+			String response = client.executeAndGetResponse("getexpenses " + user.getUsername());
+			
+		} catch (Exception e) {
+			System.err.println("error getting expenses for " + user.getUsername());
+			throw e;
+		}
 		// TODO: call client.executeAndGetResponse(user.getUsername());
 		
 		// TODO: parse response into ArrayList of Expense

@@ -12,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import database.Database;
+import database.Expense;
 import database.User;
 import utils.Encryption;
 
@@ -196,6 +197,21 @@ public class Server extends JFrame implements Runnable {
 					
 					Database.addUser(user);
 					
+					return "done";
+				} else if (command.startsWith("getexpenses ")) {
+					String requestUser = command.split(" ", 2)[1];
+					User user = new User(requestUser);
+					ArrayList<Expense> expenses = Database.getExpenses(user);
+					
+					if (expenses.size() == 0) {
+						return "no expenses for user";
+					} else {
+						return expenses.toString();
+					}
+				} else if (command.startsWith("addexpense ")) {
+					String requestExpense = command.split(" ", 2)[1];
+					Expense expense = new Expense(requestExpense);
+					Database.addExpense(expense);
 					return "done";
 				} else {
 					ta.append("client: " + command + '\n');

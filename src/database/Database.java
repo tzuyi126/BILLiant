@@ -48,7 +48,7 @@ public class Database {
 			statement.executeUpdate("DROP TABLE IF EXISTS UserGroup");
 			
 			statement.executeUpdate("CREATE TABLE IF NOT EXISTS User (id string NOT NULL, username string PRIMARY KEY, password string NOT NULL, key string NOT NULL)");
-			statement.executeUpdate("CREATE TABLE IF NOT EXISTS Expense (id string PRIMARY KEY, title string, amount double NOT NULL, time text, creditor string NOT NULL, debtor string NOT NULL, FOREIGN KEY(creditor) references User(username))");
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS Expense (id string PRIMARY KEY, title string, amount double NOT NULL, time text, creditor string NOT NULL, debtor string NOT NULL, FOREIGN KEY(creditor) references User(username), FOREIGN KEY(debtor) references User(username)");
 			
 		} catch (Exception e) {
 			System.err.println("error setting up database");
@@ -153,8 +153,8 @@ public class Database {
 			statement.setString(2, expense.getTitle());
 			statement.setDouble(3, expense.getAmount());
 			statement.setString(4, expense.getTime());
-			statement.setString(5, expense.getCreditorStr());
-			statement.setString(6, expense.getDebtorStr());
+			statement.setString(5, expense.getCreditor());
+			statement.setString(6, expense.getDebtor());
 			
 			statement.execute();
 			
@@ -201,10 +201,6 @@ public class Database {
 		Database.setUpDatabase();
 		
 		try {
-//			User user = new User("hello", "helloworld");
-//			User user1 = new User("goodbye", "goodbyeworld");
-//			Expense expense = new Expense("Dinner", 21.5, "2023/12/12", user.getUsername(), user1.getUsername());
-//			Expense expense1 = new Expense("Rent", 1350, "2023/12/01", user.getUsername(), user1.getUsername());
 			
 //			User alice = new User("Alice", "hialice");
 //			alice.setFriendsStr("Bob,Ivy,Jack,Frank,Grace");

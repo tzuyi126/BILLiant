@@ -12,12 +12,17 @@ public class Expense {
 	
 	private String time;
 	
-	private String creditorStr;
+	private String creditor;
 	
-	private String debtorStr = "";
+	private String debtor;
 	
-	public Expense() {
-		
+	public Expense(String title, double amount, String time, String creditor, String debtor) {
+		this.id = Encryption.getRandomeId();
+		this.title = title;
+		this.amount = amount;
+		this.time = time;
+		this.creditor = creditor;
+		this.debtor = debtor;
 	}
 
 	public Expense(String id, String title, double amount, String time, String creditor, String debtor) {
@@ -25,17 +30,18 @@ public class Expense {
 		this.title = title;
 		this.amount = amount;
 		this.time = time;
-		this.creditorStr = creditor;
-		this.debtorStr = debtor;
+		this.creditor = creditor;
+		this.debtor = debtor;
 	}
 	
-	public Expense(String title, double amount, String time, String creditor, String debtor) {
-		this.id = Encryption.getRandomeId();
-		this.title = title;
-		this.amount = amount;
-		this.time = time;
-		this.creditorStr = creditor;
-		this.debtorStr = debtor;
+	public Expense(String expenseStr) {
+		String[] splited = expenseStr.split(",");
+		this.id = splited[0];
+		this.title = splited[1];
+		this.amount = Double.parseDouble(splited[2]);
+		this.time = splited[3];
+		this.creditor = splited[4];
+		this.debtor = splited[5];
 	}
 	
 	public String getId() {
@@ -54,17 +60,17 @@ public class Expense {
 		return time;
 	}
 	
-	public String getCreditorStr() {
-		return creditorStr;
+	public String getCreditor() {
+		return creditor;
 	}
 	
-	public String getDebtorStr() {
-		return debtorStr;
+	public String getDebtor() {
+		return debtor;
 	}
 	
 	@Override
 	public String toString() {
-		return title + ": $" + amount + ", paid by " + creditorStr + " for " + debtorStr;
+		return String.join(",", id, title, Double.toString(amount), time, creditor, debtor);
 	}
 
 }
