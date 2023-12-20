@@ -26,7 +26,7 @@ import database.User;
 import socket.Client;
 import utils.Calculator;
 
-public class Dashboard extends JFrame implements Runnable {
+public class Dashboard extends JFrame {
 	
 	private User user;
 	
@@ -55,7 +55,6 @@ public class Dashboard extends JFrame implements Runnable {
 		setLoginMenu();
 
 		this.setVisible(true);
-		new Thread(this).run();
 	}
 	
 	private void setLoginMenu() {
@@ -110,7 +109,7 @@ public class Dashboard extends JFrame implements Runnable {
 
 		summary = new JTextArea();
 		summary.setEditable(false);
-		summary.setPreferredSize(new Dimension(200, 300));
+		summary.setPreferredSize(new Dimension(200, 100));
 		JScrollPane sp = new JScrollPane(summary);
 		
 		display = new JPanel();
@@ -302,24 +301,6 @@ public class Dashboard extends JFrame implements Runnable {
 			summary();
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-	}
-	
-	@Override
-	public void run() {
-		try {
-			while (true) {
-				while (user == null) {
-					Thread.sleep(500);
-				}
-				
-				
-
-				Thread.sleep(500);
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			System.exit(1);
 		}
 	}
 
