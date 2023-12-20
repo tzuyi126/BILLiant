@@ -47,13 +47,14 @@ public class Expense {
 //		this.debtorStr = debtor;
 //	}
 	
-	public Expense(String title, double amount, String time, String creditor, String debtor) {
+	public Expense(String title, double amount, String time, String creditor, String debtor, String groupId) {
 		this.id = Encryption.getRandomeId();
 		this.title = title;
 		this.amount = amount;
 		this.time = time;
 		this.creditorStr = creditor;
 		this.debtorStr = debtor;
+		this.groupId = groupId;
 	}
 	
 	public Expense(String title, double amount, String time, String creditor) {
@@ -102,7 +103,7 @@ public class Expense {
 	
 	@Override
 	public String toString() {
-		return title + amount + creditorStr;
+		return title + ": $" + amount + ", paid by " + creditorStr + " for " + debtorStr;
 	}
 
 }

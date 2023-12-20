@@ -105,6 +105,7 @@ public class User {
 	public List<String> getFriends() {
 		return Arrays.asList(friendsStr.split(","));
 	}
+
 	
 	@Override
 	public String toString() {
