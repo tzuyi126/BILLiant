@@ -45,10 +45,11 @@ public class Database {
 			
 			statement.executeUpdate("DROP TABLE IF EXISTS Expense");
 			statement.executeUpdate("DROP TABLE IF EXISTS User");
-			statement.executeUpdate("CREATE TABLE IF NOT EXISTS User (id string NOT NULL, username string PRIMARY KEY, password string NOT NULL, key string NOT NULL, friends string)");
-			statement.executeUpdate("CREATE TABLE IF NOT EXISTS Expense (id string PRIMARY KEY, title string, amount double NOT NULL, time text, creditor string NOT NULL, debtor string NOT NULL, groupId string, FOREIGN KEY(creditor) references User(username))");
-			statement.executeUpdate("CREATE TABLE IF NOT EXISTS UserGroup (id string PRIMARY KEY, name string, members string)");
-
+			statement.executeUpdate("DROP TABLE IF EXISTS UserGroup");
+			
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS User (id string NOT NULL, username string PRIMARY KEY, password string NOT NULL, key string NOT NULL)");
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS Expense (id string PRIMARY KEY, title string, amount double NOT NULL, time text, creditor string NOT NULL, debtor string NOT NULL, FOREIGN KEY(creditor) references User(username))");
+			
 		} catch (Exception e) {
 			System.err.println("error setting up database");
 			e.printStackTrace();
@@ -95,13 +96,12 @@ public class Database {
 		try {
 			con = connect();
 			
-			String insertString = "INSERT INTO User VALUES (?, ?, ?, ?, ?)";
+			String insertString = "INSERT INTO User VALUES (?, ?, ?, ?)";
 			statement = con.prepareStatement(insertString);
 			statement.setString(1, user.getId());
 			statement.setString(2, user.getUsername());
 			statement.setString(3, user.getPassword());
 			statement.setString(4, user.getKey());
-			statement.setString(5, user.getFriendsStr());
 			
 			statement.execute();
 		} catch (Exception e) {
@@ -127,8 +127,7 @@ public class Database {
 						rs.getString("id"),
 						rs.getString("username"),
 						rs.getString("password"),
-						rs.getString("key"),
-						rs.getString("friends")
+						rs.getString("key")
 						);
 			}
 			
@@ -143,41 +142,12 @@ public class Database {
 		}
 	}
 	
-	public static Group getGroup(String groupId) {
-		PreparedStatement statement;
-		
-		try {
-			con = connect();
-			String queryString = "SELECT * FROM UserGroup WHERE groupId = ?";
-			statement = con.prepareStatement(queryString);
-			statement.setString(1, groupId);
-			ResultSet rs = statement.executeQuery();
-			
-			while (rs.next()) {
-				return new Group(
-						rs.getString("id"),
-						rs.getString("name"),
-						rs.getString("members")
-						);
-			}
-			
-			throw new Exception("no group: " + groupId);
-		} catch (Exception e) {
-			System.err.println("error getting group");
-			e.printStackTrace();
-			
-			return null;
-		} finally {
-			disconnect();
-		}
-	}
-	
 	public static void addExpense(Expense expense) throws Exception {
 		PreparedStatement statement;
 		try {
 			con = connect();
 			
-			String insertString = "INSERT INTO Expense VALUES (?, ?, ?, ?, ?, ?, ?)";
+			String insertString = "INSERT INTO Expense VALUES (?, ?, ?, ?, ?, ?)";
 			statement = con.prepareStatement(insertString);
 			statement.setString(1, expense.getId());
 			statement.setString(2, expense.getTitle());
@@ -185,7 +155,6 @@ public class Database {
 			statement.setString(4, expense.getTime());
 			statement.setString(5, expense.getCreditorStr());
 			statement.setString(6, expense.getDebtorStr());
-			statement.setString(7, expense.getGroupId());
 			
 			statement.execute();
 			
@@ -197,29 +166,25 @@ public class Database {
 		}
 	}
 	
-	public static ArrayList<Expense> getExpenses(User user, Group group) {
+	public static ArrayList<Expense> getExpenses(User user) {
 		PreparedStatement statement;
 		ArrayList<Expense> expenses = new ArrayList<Expense>();
 		try {
 			con = connect();
+			
 			String queryString = "SELECT * FROM Expense WHERE creditor = ?";
-			if (group != null) queryString += " AND groupId = ?";
-//			String queryString = "SELECT * FROM Expense";
 			statement = con.prepareStatement(queryString);
 			statement.setString(1, user.getUsername());
-			if (group != null) statement.setString(2, group.getName());
 			ResultSet rs = statement.executeQuery();
 			
 			while (rs.next()) {
-//				System.out.println(rs.getString("id"));
 				expenses.add(new Expense(
 						rs.getString("id"),
 						rs.getString("title"),
 						rs.getDouble("amount"),
 						rs.getString("time"),
 						rs.getString("creditor"),
-						rs.getString("debtor"),
-						rs.getString("groupId")
+						rs.getString("debtor")
 						));
 			}
 			return expenses;
@@ -232,54 +197,8 @@ public class Database {
 		}
 	}
 	
-	public static void addGroup(Group group) throws Exception {
-		PreparedStatement statement;
-		try {
-			con = connect();
-			
-			String insertString = "INSERT INTO UserGroup VALUES (?, ?, ?)";
-			statement = con.prepareStatement(insertString);
-			statement.setString(1, group.getId());
-			statement.setString(2, group.getName());
-			statement.setString(3, group.getMembersStr());
-			
-			statement.execute();
-		} catch (Exception e) {
-			System.err.println("error adding group to database");
-			throw e;
-		} finally {
-			disconnect();
-		}
-	}
-	
-	public static ArrayList<Group> getGroups(User user) {
-		PreparedStatement statement;
-		ArrayList<Group> groups = new ArrayList<Group>();
-		try {
-			con = connect();
-			String queryString = "SELECT * FROM UserGroup WHERE members LIKE ?";
-			statement = con.prepareStatement(queryString);
-			statement.setString(1, "%" + user.getUsername() + "%");
-			ResultSet rs = statement.executeQuery();
-			
-			while (rs.next()) {
-				groups.add(new Group(rs.getString("id"), rs.getString("name"), rs.getString("members")));
-			}
-			return groups;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return groups;
-		} finally {
-			disconnect();
-		}
-	}
-	
-//	public static void setUpData() {
-//
-//	}
-	
 	public static void main(String[] args) {
-//		Database.setUpDatabase();
+		Database.setUpDatabase();
 		
 		try {
 //			User user = new User("hello", "helloworld");
@@ -313,6 +232,7 @@ public class Database {
 		}
 		
 //		System.out.println(expense);
+		/*
 		User user = Database.getUser("Alice");
 		System.out.println(user.toString());
 		System.out.println(Database.getExpenses(user, null).toString());
@@ -321,6 +241,6 @@ public class Database {
 		System.out.println(Database.verifyLogin("Alice", "hialice"));
 		System.out.println(Database.verifyLogin("Alice", "byealice"));
 		System.out.println(Database.verifyLogin("Ivy", "hiivy"));
-		System.out.println(Database.verifyLogin("Grace", "byegrace"));
+		System.out.println(Database.verifyLogin("Grace", "byegrace"));*/
 	}
 }

@@ -67,8 +67,6 @@ class Login extends JDialog {
 				
 				try {
 					if (verifyUser(username, password)) {
-						JOptionPane.showMessageDialog(Login.this, "Logged in successfully!", "Success", JOptionPane.PLAIN_MESSAGE);
-						
 						loginWith(username);
 					} else {
 						JOptionPane.showMessageDialog(Login.this, "Wrong username or password, please try again or register.", "Error", JOptionPane.ERROR_MESSAGE);
