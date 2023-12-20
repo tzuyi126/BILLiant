@@ -25,7 +25,7 @@ class Login extends JDialog {
 		
 		this.setTitle("Log In");
 		this.setSize(300, 200);
-		this.setLocationRelativeTo(null);
+		this.setLocationRelativeTo(dashboard);
 		this.add(createLoginPanel());
 	}
 	
@@ -73,7 +73,6 @@ class Login extends JDialog {
 					}
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(Login.this, "Something went wrong. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
-					
 				}
 			}
 		});

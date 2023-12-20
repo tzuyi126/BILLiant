@@ -99,9 +99,18 @@ public class Client implements Runnable {
 			toServer.writeUTF(encryptedCommand);
 			toServer.flush();
 			
-			String response = fromServer.readUTF();
+			StringBuilder sb = new StringBuilder();
 			
-			return Encryption.decrypt(communicationKey, response);
+			do {
+				String response = fromServer.readUTF();
+				String decryptedResponse = Encryption.decrypt(communicationKey, response);
+				
+				if (decryptedResponse.equals("over")) return sb.toString();
+				
+				sb.append(decryptedResponse);
+				
+			} while (true);
+			
 		} catch (Exception e) {
 			System.err.println("error communicating with server");
 			e.printStackTrace();
