@@ -141,6 +141,38 @@ public class Database {
 		}
 	}
 	
+	public static Expense getExpense(String id) {
+		PreparedStatement statement;
+		
+		try {
+			con = connect();
+			String queryString = "SELECT * FROM Expense WHERE id = ?";
+			statement = con.prepareStatement(queryString);
+			statement.setString(1, id);
+			ResultSet rs = statement.executeQuery();
+			
+			while (rs.next()) {
+				return new Expense(
+						rs.getString("id"),
+						rs.getString("title"),
+						rs.getDouble("amount"),
+						rs.getString("time"),
+						rs.getString("payer"),
+						rs.getString("payee")
+						);
+			}
+			
+			throw new Exception("no expense: " + id);
+		} catch (Exception e) {
+			System.err.println("error getting expense");
+			e.printStackTrace();
+			
+			return null;
+		} finally {
+			disconnect();
+		}
+	}
+	
 	public static void addExpense(Expense expense) throws Exception {
 		PreparedStatement statement;
 		try {
@@ -192,6 +224,50 @@ public class Database {
 			System.err.println("error getting expenses for user " + user.getUsername());
 			e.printStackTrace();
 			return expenses;
+		} finally {
+			disconnect();
+		}
+	}
+	
+	public static void editExpense(String id, Expense expense) throws Exception {
+		PreparedStatement statement;
+		try {
+			con = connect();
+			
+			String updateString = "UPDATE Expense SET title = ?, amount = ?, time = ?, "
+					+ "payer = ?, payee = ? WHERE id = ?";
+			statement = con.prepareStatement(updateString);
+			statement.setString(1, expense.getTitle());
+			statement.setDouble(2, expense.getAmount());
+			statement.setString(3, expense.getTime());
+			statement.setString(4, expense.getPayer());
+			statement.setString(5, expense.getPayee());
+			statement.setString(6, id);
+			
+			statement.execute();
+			
+		} catch (Exception e) {
+			System.err.println("error editing expense" + e.getLocalizedMessage());
+			throw e;
+		} finally {
+			disconnect();
+		}
+	}
+	
+	public static void deleteExpense(String id) {
+		PreparedStatement statement;
+		
+		try {
+			con = connect();
+			String queryString = "DELETE FROM Expense WHERE id = ?";
+			statement = con.prepareStatement(queryString);
+			statement.setString(1, id);
+			statement.execute();
+			
+			throw new Exception("no expense: " + id);
+		} catch (Exception e) {
+			System.err.println("error deleting expense");
+			e.printStackTrace();
 		} finally {
 			disconnect();
 		}

@@ -27,6 +27,10 @@ public class ExpenseInterface extends JDialog {
 	
 	private User user;
 	
+	private String command;
+	
+	private Expense currExpense;
+	
 	JTextField title;
 	JTextField date;
 	JFormattedTextField amount;
@@ -35,15 +39,48 @@ public class ExpenseInterface extends JDialog {
 	JRadioButton payerBtn;
 	JRadioButton payeeBtn;
 	
-	public ExpenseInterface(Dashboard dashboard, User user) {
+	public ExpenseInterface(Dashboard dashboard, User user, String command, Expense expense) {
 		super(dashboard);
 		
 		this.dashboard = dashboard;
 		
 		this.user = user;
 		
-		this.setTitle("Add an expense");
+		this.currExpense = expense;
 		
+		this.command = command;
+		
+		this.setTitle(command + " an expense");
+		
+		JPanel panel = handleExpense();
+		
+		JButton cancel = new JButton("Cancel");
+		cancel.addActionListener((e) -> this.dispose());
+
+		JPanel controlPanel = new JPanel();
+		controlPanel.add(cancel);
+		
+		if (command.equals("Add")) {
+			JButton addExpense = new JButton(command + " an expense");
+			addExpense.addActionListener(new AddExpense());
+			controlPanel.add(addExpense);
+		} else if (command.equals("Edit")) {
+			JButton editExpense = new JButton("Save edits");
+			JButton deleteExpense = new JButton("Delete expense");
+			editExpense.addActionListener(new AddExpense());
+			deleteExpense.addActionListener(new DeleteExpense());
+			controlPanel.add(editExpense);
+			controlPanel.add(deleteExpense);
+		}
+		
+		this.add(panel, BorderLayout.CENTER);
+		this.add(controlPanel, BorderLayout.SOUTH);
+		
+		this.setSize(550, 200);
+		this.setLocationRelativeTo(dashboard);
+	}
+	
+	public JPanel handleExpense() {
 		JLabel titleLabel = new JLabel("Title: ");
 		JLabel amountLabel = new JLabel("Amount: ");
 		JLabel dateLabel = new JLabel("Date: ");
@@ -78,6 +115,23 @@ public class ExpenseInterface extends JDialog {
 		
 		payeeBtn = new JRadioButton();
 		payeeBtn.setText("Nobody paid for you.");
+		
+		if (command.equals("Edit")) {
+			title.setText(currExpense.getTitle());
+			amount.setValue(currExpense.getAmount());
+			date.setText(currExpense.getTime());
+			if (currExpense.isPayer(user)) {
+				payerBtn.setSelected(true);
+				otherUsername.setText(currExpense.getPayee());
+				secondUsername = currExpense.getPayee();
+			} else if (currExpense.isPayee(user)) {
+				payeeBtn.setSelected(true);
+				otherUsername.setText(currExpense.getPayer());
+				secondUsername = currExpense.getPayer();
+			}
+			payerBtn.setText("You paid for " + secondUsername + ".");
+			payeeBtn.setText(secondUsername + " paid for you.");
+		}
 		
 		ButtonGroup btnGroup = new ButtonGroup();
 		btnGroup.add(payerBtn);
@@ -116,15 +170,27 @@ public class ExpenseInterface extends JDialog {
 		panel.add(datePanel);
 		panel.add(relationPanel);
 		
-		JPanel controlPanel = new JPanel();
-		controlPanel.add(cancel);
-		controlPanel.add(addExpense);
+		return panel;
+	}
+	
+	class DeleteExpense implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+			int delete = JOptionPane.showConfirmDialog(ExpenseInterface.this,
+					"Are you sure you want to delete this expense?", "Delete",
+					JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+			
+			if (delete == JOptionPane.YES_OPTION) {
+				try {
+					dashboard.deleteExpense(currExpense.getId());
+					JOptionPane.showMessageDialog(ExpenseInterface.this, "Expense deleted!", "Success", JOptionPane.PLAIN_MESSAGE);
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(ExpenseInterface.this, "Something went wrong. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
 		
-		this.add(panel, BorderLayout.CENTER);
-		this.add(controlPanel, BorderLayout.SOUTH);
-		
-		this.setSize(550, 200);
-		this.setLocationRelativeTo(dashboard);
 	}
 	
 	class AddExpense implements ActionListener {
@@ -135,6 +201,8 @@ public class ExpenseInterface extends JDialog {
 				String etitle = title.getText().trim();
 				if (etitle.isEmpty()) 
 					throw new Exception("Please enter title.");
+				if (etitle.contains(" "))
+					throw new Exception("Title contains illegal characters (no spaces)");
 			
 				if (amount.getValue() == null) 
 					throw new Exception("Please enter amount.");
@@ -168,15 +236,20 @@ public class ExpenseInterface extends JDialog {
 				
 				Expense expense = new Expense(etitle, eamount, edate, payerUsername, payeeUsername);
 				try {
-					dashboard.addExpense(expense);
+					if (command.equals("Add")) {
+						dashboard.addExpense(expense);
+						JOptionPane.showMessageDialog(ExpenseInterface.this, "You added an expense!", "Success", JOptionPane.PLAIN_MESSAGE);
+					} else if (command.equals("Edit")) {
+						dashboard.editExpense(currExpense.getId(), expense);
+						JOptionPane.showMessageDialog(ExpenseInterface.this, "Expense saved!", "Success", JOptionPane.PLAIN_MESSAGE);
+					}
 					
-					JOptionPane.showMessageDialog(ExpenseInterface.this, "You add an expense!", "Success", JOptionPane.PLAIN_MESSAGE);
 				} catch (Exception e1) {
 					JOptionPane.showMessageDialog(ExpenseInterface.this, "Something went wrong. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
 					e1.printStackTrace();
 				}
 			} catch (Exception e) {
-				JOptionPane.showMessageDialog(ExpenseInterface.this, e.getMessage(), "Oops!", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(ExpenseInterface.this, e.getLocalizedMessage(), "Oops!", JOptionPane.WARNING_MESSAGE);
 			}
 		}
 	}

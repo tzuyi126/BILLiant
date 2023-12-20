@@ -2,6 +2,8 @@ package layout;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumnModel;
 
 import database.Expense;
 import database.User;
@@ -42,6 +47,9 @@ public class Dashboard extends JFrame {
 	JPanel controls;
 	
 	JTextArea summary;
+	
+	int toEdit = -1;
+	String editId;
 
 	public Dashboard() {
 		super("BILLiant");
@@ -102,7 +110,10 @@ public class Dashboard extends JFrame {
 		panes.addTab("Debt", debt);
 		
 		JButton addExpense = new JButton("Add an expense");
-		addExpense.addActionListener((e) -> new ExpenseInterface(this, user).setVisible(true));
+		addExpense.addActionListener((e) -> new ExpenseInterface(this, user, "Add", null).setVisible(true));
+		
+		JButton editExpense = new JButton("Edit selected expense");
+		editExpense.addActionListener((e) -> handleEdit());
 		
 		JButton refresh = new JButton("Refresh");
 		refresh.addActionListener((e) -> refresh());
@@ -118,6 +129,7 @@ public class Dashboard extends JFrame {
 		
 		controls = new JPanel();
 		controls.add(addExpense);
+		controls.add(editExpense);
 		controls.add(refresh);
 		
 		this.setJMenuBar(menuBar);
@@ -129,11 +141,27 @@ public class Dashboard extends JFrame {
 		SwingUtilities.updateComponentTreeUI(this);
 	}
 	
+	private void handleEdit() {
+		if (toEdit == -1) {
+			JOptionPane.showMessageDialog(this, "No expense selected", "Oops!", JOptionPane.ERROR_MESSAGE);
+		} else {
+			Expense currExpense = null;
+			try {
+				currExpense = getExpense(editId);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			new ExpenseInterface(this, user, "Edit", currExpense).setVisible(true);
+		}
+	}
+	
 	private JPanel createUserDashboard() {
 		JPanel panel = new JPanel();
 
 		dashboardTable = new JTable();
 		dashboardTable.setModel(setupDashboard(expenses));
+		TableColumnModel dashboardTableCol = dashboardTable.getColumnModel();
+		dashboardTable.removeColumn(dashboardTableCol.getColumn(6));
 		
 		JScrollPane sp = new JScrollPane(dashboardTable);
 		
@@ -147,6 +175,8 @@ public class Dashboard extends JFrame {
 		
 		loanTable = new JTable();
 		loanTable.setModel(setupDashboard(expenses.stream().filter(e -> e.getPayer().equals(user.getUsername())).collect(Collectors.toList())));
+		TableColumnModel loanTableCol = loanTable.getColumnModel();
+		loanTable.removeColumn(loanTableCol.getColumn(6));
 		
 		JScrollPane sp = new JScrollPane(loanTable);
 		
@@ -160,6 +190,8 @@ public class Dashboard extends JFrame {
 		
 		debtTable = new JTable();
 		debtTable.setModel(setupDashboard(expenses.stream().filter(e -> e.getPayee().equals(user.getUsername())).collect(Collectors.toList())));
+		TableColumnModel debtTableCol = debtTable.getColumnModel();
+		debtTable.removeColumn(debtTableCol.getColumn(6));
 		
 		JScrollPane sp = new JScrollPane(debtTable);
 		
@@ -176,12 +208,30 @@ public class Dashboard extends JFrame {
 		try {
 			for (Expense e : expenses) {
 				tableModel.addRow(new Object[] {
-						e.getTitle(), e.getAmount(), e.getTime(), e.getPayer(), e.getPayee()
+						new Boolean(false), e.getTitle(), e.getAmount(), e.getTime(), e.getPayer(), e.getPayee(), e.getId()
 				});
 			}
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(this, "Something went wrong when fetching data!", "Oops!", JOptionPane.ERROR_MESSAGE);
 		}
+		
+		tableModel.addTableModelListener(new TableModelListener() {
+			@Override
+			public void tableChanged(TableModelEvent e) {
+				int row = e.getFirstRow();
+				int column = e.getColumn();
+				if (column == 0) {
+					boolean value = (boolean) tableModel.getValueAt(row, column);
+					if (value == true) {
+						tableModel.setSelectedRow(row);
+						toEdit = row;
+						editId = tableModel.getSelectedRowId(row);
+					} else {
+						toEdit = -1;
+					}
+				}
+			}
+		});
 		
 		return tableModel;
 	}
@@ -287,6 +337,42 @@ public class Dashboard extends JFrame {
 			return expenses;
 		} catch (Exception e) {
 			System.err.println("error getting expenses for " + user.getUsername());
+			throw e;
+		}
+	}
+	
+	public Expense getExpense(String id) throws Exception {
+		try {
+			String response = client.executeAndGetResponse("getexpense " + id);
+			
+			if (response.equals("no expense")) return null;
+			
+			return new Expense(response);
+		} catch (Exception e) {
+			System.err.println("error finding expense with id: " + id);
+			throw e;
+		}
+	}
+	
+	public void editExpense(String id, Expense expense) throws Exception {
+		try {
+			String response = client.executeAndGetResponse("editexpense " + id + " " + expense.toString());
+			
+			if (!response.equals("done")) throw new Exception(response);
+			
+		} catch (Exception e) {
+			System.err.println("error editing an expense: " + e.getLocalizedMessage());
+			throw e;
+		}
+	}
+	
+	public void deleteExpense(String id) throws Exception {
+		try {
+			String response = client.executeAndGetResponse("deleteexpense " + id);
+			
+			if (response.equals("no expense"));
+		} catch (Exception e) {
+			System.err.println("error finding expense with id to delete: " + id);
 			throw e;
 		}
 	}

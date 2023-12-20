@@ -72,7 +72,7 @@ class Login extends JDialog {
 						JOptionPane.showMessageDialog(Login.this, "Wrong username or password, please try again or register.", "Error", JOptionPane.ERROR_MESSAGE);
 					}
 				} catch (Exception e) {
-					JOptionPane.showMessageDialog(Login.this, "Something went wrong. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(Login.this, "Something went wrong. Please try again." + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});

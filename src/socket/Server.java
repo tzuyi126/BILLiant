@@ -200,6 +200,15 @@ public class Server extends JFrame implements Runnable {
 					ArrayList<Expense> expenses = Database.getExpenses(user);
 					
 					expenses.forEach(expense -> write(expense.toString() + "\n"));
+				} else if (command.startsWith("getexpense " )) {
+					String requestExpenseId = command.split(" ", 2)[1];
+					Expense expense = Database.getExpense(requestExpenseId);
+					
+					if (expense == null) {
+						write("no such expense");
+					} else {
+						write(expense.toString());
+					}
 				} else if (command.startsWith("addexpense ")) {
 					String requestExpense = command.split(" ", 2)[1];
 					Expense expense = new Expense(requestExpense);
@@ -207,6 +216,18 @@ public class Server extends JFrame implements Runnable {
 					Database.addExpense(expense);
 
 					write("done");
+				} else if (command.startsWith("editexpense ")) {
+					String requestId = command.split(" ", 3)[1];
+					String requestExpense = command.split(" ", 3)[2];
+					
+					Expense expense = new Expense(requestExpense);
+					Database.editExpense(requestId, expense);
+					write ("done");
+				} else if (command.startsWith("deleteexpense ")) {
+					String expenseId = command.split(" ", 2)[1];
+					
+					Database.deleteExpense(expenseId);
+					write ("done");
 				} else {
 					ta.append("client: " + command + '\n');
 				}

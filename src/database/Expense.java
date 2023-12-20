@@ -68,6 +68,14 @@ public class Expense {
 		return payee;
 	}
 	
+	public boolean isPayer(User user) {
+		return payer.equals(user.getUsername());
+	}
+	
+	public boolean isPayee(User user) {
+		return payee.equals(user.getUsername());
+	}
+	
 	@Override
 	public String toString() {
 		return String.join(",", id, title, Double.toString(amount), time, payer, payee);
