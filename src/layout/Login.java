@@ -25,7 +25,7 @@ class Login extends JDialog {
 		
 		this.setTitle("Log In");
 		this.setSize(300, 200);
-		this.setLocationRelativeTo(null);
+		this.setLocationRelativeTo(dashboard);
 		this.add(createLoginPanel());
 	}
 	
@@ -67,15 +67,12 @@ class Login extends JDialog {
 				
 				try {
 					if (verifyUser(username, password)) {
-						JOptionPane.showMessageDialog(Login.this, "Log in successfully!", "Success", JOptionPane.PLAIN_MESSAGE);
-						
 						loginWith(username);
 					} else {
 						JOptionPane.showMessageDialog(Login.this, "Wrong username or password, please try again or register.", "Error", JOptionPane.ERROR_MESSAGE);
 					}
 				} catch (Exception e) {
-					JOptionPane.showMessageDialog(Login.this, "Something went wrong. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
-					
+					JOptionPane.showMessageDialog(Login.this, "Something went wrong. Please try again." + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});

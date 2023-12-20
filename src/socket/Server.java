@@ -12,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import database.Database;
+import database.Expense;
 import database.User;
 import utils.Encryption;
 
@@ -161,12 +162,7 @@ public class Server extends JFrame implements Runnable {
 					
 					String decrypted = Encryption.decrypt(communicationKey, inString);
 					
-					String response = execute(decrypted);
-
-					String encrypted = Encryption.encrypt(communicationKey, response);
-					
-					toClient.writeUTF(encrypted);
-					toClient.flush();
+					execute(decrypted);
 				}
 			} catch (Exception e) {
 				ta.append("client might be closed\n");
@@ -174,38 +170,87 @@ public class Server extends JFrame implements Runnable {
 			}
 		}
 		
-		private String execute(String command) {
+		private void execute(String command) {
 			try {
 				if (command.startsWith("getuser ")) {
 					String requestUsername = command.split(" ", 2)[1];
 					User user = Database.getUser(requestUsername);
 					
 					if (user == null) {
-						return "no user";
+						write("no user");
 					} else {
-						return user.toString();
+						write(user.toString());
 					}
 				} else if (command.startsWith("verify ")) {
 					String requestUsername = command.split(" ", 3)[1];
 					String requestPassword = command.split(" ", 3)[2];
 					
-					return String.valueOf(Database.verifyLogin(requestUsername, requestPassword));
+					write(String.valueOf(Database.verifyLogin(requestUsername, requestPassword)));
 				} else if (command.startsWith("adduser ")) {
 					String requestUser = command.split(" ", 2)[1];
 					User user = new User(requestUser);
 					
 					Database.addUser(user);
+
+					write("done");
+				} else if (command.startsWith("getexpenses ")) {
+					String requestUsername = command.split(" ", 2)[1];
+					User user = Database.getUser(requestUsername);
 					
-					return "done";
+					ArrayList<Expense> expenses = Database.getExpenses(user);
+					
+					expenses.forEach(expense -> write(expense.toString() + "\n"));
+				} else if (command.startsWith("getexpense " )) {
+					String requestExpenseId = command.split(" ", 2)[1];
+					Expense expense = Database.getExpense(requestExpenseId);
+					
+					if (expense == null) {
+						write("no such expense");
+					} else {
+						write(expense.toString());
+					}
+				} else if (command.startsWith("addexpense ")) {
+					String requestExpense = command.split(" ", 2)[1];
+					Expense expense = new Expense(requestExpense);
+					
+					Database.addExpense(expense);
+
+					write("done");
+				} else if (command.startsWith("editexpense ")) {
+					String requestId = command.split(" ", 3)[1];
+					String requestExpense = command.split(" ", 3)[2];
+					
+					Expense expense = new Expense(requestExpense);
+					Database.editExpense(requestId, expense);
+					write ("done");
+				} else if (command.startsWith("deleteexpense ")) {
+					String expenseId = command.split(" ", 2)[1];
+					
+					Database.deleteExpense(expenseId);
+					write ("done");
 				} else {
 					ta.append("client: " + command + '\n');
-					return "";
 				}
+
 			} catch (Exception e) {
 				e.printStackTrace();
 				ta.append("failed to execute command: " + command + '\n');
+
+				write(e.getMessage());
+			}
+
+			write("over");
+		}
+		
+		private void write(String command) {
+			try {
+				String encrypted = Encryption.encrypt(communicationKey, command);
 				
-				return "failed to execute command: " + command;
+				toClient.writeUTF(encrypted);
+				toClient.flush();
+			} catch (Exception e) {
+				ta.append("error writing to client\n");
+				e.printStackTrace();
 			}
 		}
 	}

@@ -1,11 +1,9 @@
 package database;
 
-import java.util.ArrayList;
-import java.util.Date;
-
 import utils.Encryption;
 
 public class Expense {
+	
 	private String id;
 	
 	private String title;
@@ -14,54 +12,36 @@ public class Expense {
 	
 	private String time;
 	
-	private String creditorStr;
+	private String payer;
 	
-//	private User creditor;
+	private String payee;
 	
-	private String debtorStr = "";
-	
-//	private ArrayList<User> debtor;
-	
-	private String groupId = "";
-	
-	public Expense() {
-		
+	public Expense(String title, double amount, String time, String payer, String payee) {
+		this.id = Encryption.getRandomeId();
+		this.title = title;
+		this.amount = amount;
+		this.time = time;
+		this.payer = payer;
+		this.payee = payee;
 	}
 
-	public Expense(String id, String title, double amount, String time, String creditor, String debtor, String groupId) {
+	public Expense(String id, String title, double amount, String time, String payer, String payee) {
 		this.id = id;
 		this.title = title;
 		this.amount = amount;
 		this.time = time;
-		this.creditorStr = creditor;
-		this.debtorStr = debtor;
-		this.groupId = groupId;
+		this.payer = payer;
+		this.payee = payee;
 	}
 	
-//	public Expense(String id, String title, double amount, String time, User creditor, String debtor) {
-//		this.id = id;
-//		this.title = title;
-//		this.amount = amount;
-//		this.time = time;
-//		this.creditor = creditor;
-//		this.debtorStr = debtor;
-//	}
-	
-	public Expense(String title, double amount, String time, String creditor, String debtor) {
-		this.id = Encryption.getRandomeId();
-		this.title = title;
-		this.amount = amount;
-		this.time = time;
-		this.creditorStr = creditor;
-		this.debtorStr = debtor;
-	}
-	
-	public Expense(String title, double amount, String time, String creditor) {
-		this.id = Encryption.getRandomeId();
-		this.title = title;
-		this.amount = amount;
-		this.time = time;
-		this.creditorStr = creditor;
+	public Expense(String expenseStr) {
+		String[] splited = expenseStr.split(",");
+		this.id = splited[0];
+		this.title = splited[1];
+		this.amount = Double.parseDouble(splited[2]);
+		this.time = splited[3];
+		this.payer = splited[4];
+		this.payee = splited[5];
 	}
 	
 	public String getId() {
@@ -80,29 +60,25 @@ public class Expense {
 		return time;
 	}
 	
-	public String getCreditorStr() {
-		return creditorStr;
+	public String getPayer() {
+		return payer;
 	}
 	
-//	public User getCreditor() {
-//		return creditor;
-//	}
-//	
-//	public ArrayList<User> getDebtor() {
-//		return debtor;
-//	}
-	
-	public String getDebtorStr() {
-		return debtorStr;
+	public String getPayee() {
+		return payee;
 	}
 	
-	public String getGroupId() {
-		return groupId;
+	public boolean isPayer(User user) {
+		return payer.equals(user.getUsername());
+	}
+	
+	public boolean isPayee(User user) {
+		return payee.equals(user.getUsername());
 	}
 	
 	@Override
 	public String toString() {
-		return title + amount + creditorStr;
+		return String.join(",", id, title, Double.toString(amount), time, payer, payee);
 	}
 
 }
