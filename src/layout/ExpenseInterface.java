@@ -31,6 +31,10 @@ public class ExpenseInterface extends JDialog {
 	
 	private Expense currExpense;
 	
+	private static final String ACTION_ADD = "Add";
+	
+	private static final String ACTION_EDIT = "Edit";
+	
 	JTextField title;
 	JTextField date;
 	JFormattedTextField amount;
@@ -60,11 +64,11 @@ public class ExpenseInterface extends JDialog {
 		JPanel controlPanel = new JPanel();
 		controlPanel.add(cancel);
 		
-		if (command.equals("Add")) {
+		if (command.equals(ACTION_ADD)) {
 			JButton addExpense = new JButton(command + " an expense");
 			addExpense.addActionListener(new AddExpense());
 			controlPanel.add(addExpense);
-		} else if (command.equals("Edit")) {
+		} else if (command.equals(ACTION_EDIT)) {
 			JButton editExpense = new JButton("Save edits");
 			JButton deleteExpense = new JButton("Delete expense");
 			editExpense.addActionListener(new AddExpense());
@@ -185,6 +189,8 @@ public class ExpenseInterface extends JDialog {
 				try {
 					dashboard.deleteExpense(currExpense.getId());
 					JOptionPane.showMessageDialog(ExpenseInterface.this, "Expense deleted!", "Success", JOptionPane.PLAIN_MESSAGE);
+					
+					ExpenseInterface.this.dispose();
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(ExpenseInterface.this, "Something went wrong. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
 				}
@@ -236,10 +242,10 @@ public class ExpenseInterface extends JDialog {
 				
 				Expense expense = new Expense(etitle, eamount, edate, payerUsername, payeeUsername);
 				try {
-					if (command.equals("Add")) {
+					if (command.equals(ACTION_ADD)) {
 						dashboard.addExpense(expense);
 						JOptionPane.showMessageDialog(ExpenseInterface.this, "You added an expense!", "Success", JOptionPane.PLAIN_MESSAGE);
-					} else if (command.equals("Edit")) {
+					} else if (command.equals(ACTION_EDIT)) {
 						dashboard.editExpense(currExpense.getId(), expense);
 						JOptionPane.showMessageDialog(ExpenseInterface.this, "Expense saved!", "Success", JOptionPane.PLAIN_MESSAGE);
 					}

@@ -2,8 +2,6 @@ package layout;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +22,6 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.TableColumnModel;
 
 import database.Expense;
 import database.User;
@@ -160,8 +157,6 @@ public class Dashboard extends JFrame {
 
 		dashboardTable = new JTable();
 		dashboardTable.setModel(setupDashboard(expenses));
-		TableColumnModel dashboardTableCol = dashboardTable.getColumnModel();
-		dashboardTable.removeColumn(dashboardTableCol.getColumn(6));
 		
 		JScrollPane sp = new JScrollPane(dashboardTable);
 		
@@ -175,8 +170,6 @@ public class Dashboard extends JFrame {
 		
 		loanTable = new JTable();
 		loanTable.setModel(setupDashboard(expenses.stream().filter(e -> e.getPayer().equals(user.getUsername())).collect(Collectors.toList())));
-		TableColumnModel loanTableCol = loanTable.getColumnModel();
-		loanTable.removeColumn(loanTableCol.getColumn(6));
 		
 		JScrollPane sp = new JScrollPane(loanTable);
 		
@@ -190,8 +183,6 @@ public class Dashboard extends JFrame {
 		
 		debtTable = new JTable();
 		debtTable.setModel(setupDashboard(expenses.stream().filter(e -> e.getPayee().equals(user.getUsername())).collect(Collectors.toList())));
-		TableColumnModel debtTableCol = debtTable.getColumnModel();
-		debtTable.removeColumn(debtTableCol.getColumn(6));
 		
 		JScrollPane sp = new JScrollPane(debtTable);
 		
@@ -384,6 +375,9 @@ public class Dashboard extends JFrame {
 			loanTable.setModel(setupDashboard(expenses.stream().filter(e -> e.getPayer().equals(user.getUsername())).collect(Collectors.toList())));
 			debtTable.setModel(setupDashboard(expenses.stream().filter(e -> e.getPayee().equals(user.getUsername())).collect(Collectors.toList())));
 			
+			dashboardTable.getColumnModel().removeColumn(dashboardTable.getColumnModel().getColumn(6));
+			loanTable.getColumnModel().removeColumn(loanTable.getColumnModel().getColumn(6));
+			debtTable.getColumnModel().removeColumn(debtTable.getColumnModel().getColumn(6));
 			summary();
 		} catch (Exception e) {
 			e.printStackTrace();

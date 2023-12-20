@@ -1,16 +1,8 @@
 package layout;
 
-import java.awt.Component;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.Vector;
 
-import javax.swing.DefaultCellEditor;
-import javax.swing.JCheckBox;
-import javax.swing.JRadioButton;
-import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 
 public class ExpenseTableModel extends DefaultTableModel {
 	private String[] cols = {"Select", "Title", "Amount", "Time", "Payer", "Payee", "id"};
@@ -54,7 +46,7 @@ public class ExpenseTableModel extends DefaultTableModel {
 	public void setValueAt(Object aValue, int row, int column) {
 		if (column == 0) {
 			boolean change = (boolean) aValue;
-			System.out.println(change);
+			
 			if (change == true) {
 				int rows = getRowCount();
 				for (int i = 0; i < rows; i++) {

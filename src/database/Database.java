@@ -259,12 +259,12 @@ public class Database {
 		
 		try {
 			con = connect();
+			
 			String queryString = "DELETE FROM Expense WHERE id = ?";
 			statement = con.prepareStatement(queryString);
 			statement.setString(1, id);
 			statement.execute();
 			
-			throw new Exception("no expense: " + id);
 		} catch (Exception e) {
 			System.err.println("error deleting expense");
 			e.printStackTrace();
